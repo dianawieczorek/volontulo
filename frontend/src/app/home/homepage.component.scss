@@ -9,3 +9,23 @@ volontulo-banner {
 .homepage-offer-list {
   margin-top: 30px;
 }
+
+.card {
+  flex: none;
+  padding: 0;
+  margin-bottom: 30px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, white 40%, white 100%);;
+}
+
+@media only screen and (min-width: 768px) {
+  .card {
+    width: calc(33.3% - 30px);
+  }
+}
+
+@media only screen and (min-width: 576px) and (max-width: 767px) {
+  .card {
+    width: calc(50% - 30px);
+  }
+}
+

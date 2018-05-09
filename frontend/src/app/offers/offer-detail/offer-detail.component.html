@@ -9,7 +9,7 @@
                     <div class="header-labels">
                         <volontulo-icon-label icon="place">{{ offer.location }}</volontulo-icon-label>
                         <volontulo-icon-label icon="access_time">{{ offer.startedAt | date:'shortDate' }} - {{ offer.finishedAt | date:'shortDate' }}</volontulo-icon-label>
-<!-- TODO: restore the link for users who can edit the offer when permission check implemented in the frontend 
+<!-- TODO: restore the link for users who can edit the offer when permission check implemented in the frontend
 <a href="{{ djangoRoot }}/offers/{{ offer.slug }}/{{ offer.id }}/edit" class="btn btn-sm">
 <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Edytuj ofertę</a>-->
                     </div>
@@ -46,7 +46,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xs-12 col-sm-6 col-md-4">  
+        <div class="col-xs-12 col-sm-6 col-md-4">
             <div class="card text-center">
                 <div class="alert alert-danger">
                     <h2>Możesz pomóc?</h2><br>
