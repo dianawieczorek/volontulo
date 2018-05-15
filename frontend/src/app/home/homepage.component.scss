@@ -1,6 +1,20 @@
-volontulo-homepage-offer {
-  min-width: 300px;
+$card-margin: 15px;
+.card {
+  margin: $card-margin;
+  flex: 1 0 calc(33.333% - #{2*$card-margin});
+  max-width: calc(33.333% - #{2*$card-margin});
+
+  @media only screen and (min-width: 768px) and (max-width: 1200px) {
+    flex: 1 0 calc(50% - #{2*$card-margin});
+    max-width: calc(50% - #{2*$card-margin});
+  }
+
+  @media only screen and (max-width: 767px) {
+    flex: 1 0 calc(100% - #{2*$card-margin});
+    max-width: calc(100% - #{2*$card-margin});
+  }
 }
+
 volontulo-banner {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -8,8 +22,4 @@ volontulo-banner {
 
 .homepage-offer-list {
   margin-top: 30px;
-}
-
-.card {
-  margin-bottom: 40px;
 }
