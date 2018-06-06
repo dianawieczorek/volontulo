@@ -10,13 +10,11 @@
     <ul class="list-group list-group-flush">
       <li class="list-group-item">
         <div>
-          <i class="fas fa-map-marker-alt"></i>
           {{ offer.location }}
         </div>
       </li>
       <li class="list-group-item">
         <div>
-          <i class="far fa-calendar-alt"></i>
           Od {{ offer.startedAt ? (offer.startedAt | date: 'dd MMMM yyyy, hh:mm'): 'teraz' }}
         </div>
         <div>do {{ offer.finishedAt ? (offer.finishedAt | date: 'dd MMMM yyyy, hh:mm'): 'ustalenia' }}</div>
