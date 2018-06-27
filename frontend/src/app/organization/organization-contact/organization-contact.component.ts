@@ -3,9 +3,9 @@ import { NgForm } from '@angular/forms';
 
 import { OrganizationContactPayload } from '../organization.model';
 import { ContactStatus } from '../organization.interfaces';
-import {AuthService} from "../../auth.service";
-import {Observable} from "rxjs/Observable";
-import {User} from "../../user";
+import {AuthService} from '../../auth.service';
+import {Observable} from 'rxjs/Observable';
+import {User} from '../../user';
 
 
 @Component({
@@ -20,7 +20,7 @@ export class OrganizationContactComponent implements OnChanges {
   submitDisabled = false;
   alertSuccessClosed = true;
   alertErrorClosed = true;
-  user$ : Observable<User>;
+  user$: Observable<User>;
 
   constructor(private authService: AuthService) {
     this.user$ = authService.user$;
