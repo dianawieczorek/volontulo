@@ -7,5 +7,5 @@ export interface User {
   firstName: string,
   lastName: string,
   email: string,
-  phoneNo: string;
+  phoneNo: string,
 }
