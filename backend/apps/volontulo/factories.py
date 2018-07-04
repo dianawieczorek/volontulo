@@ -15,7 +15,6 @@ from factory.fuzzy import FuzzyChoice
 import requests
 
 from apps.volontulo.models import Offer
-from apps.volontulo.models import OfferImage
 from apps.volontulo.models import Organization
 from apps.volontulo.models import UserProfile
 
@@ -155,19 +154,6 @@ def placeimg_com_download(width, height, category):
     return wrapped_func
 
 
-class OfferImageFactory(factory.DjangoModelFactory):
-    """Factory for OfferImage."""
-
-    class Meta:  # pylint: disable=C0111
-        model = OfferImage
-
-    is_main = True
-    path = ImageField(from_path=os.path.join(
-        os.path.dirname(__file__),
-        'static/volontulo/img/volontulo_baner.png'
-    ))
-
-
 class OfferFactory(factory.DjangoModelFactory):
     """Factory for Offer"""
 
@@ -201,17 +187,11 @@ class OfferFactory(factory.DjangoModelFactory):
     started_at = factory.fuzzy.FuzzyDateTime(_start_date, _end_date)
     finished_at = factory.fuzzy.FuzzyDateTime(_start_date, _end_date)
     time_period = factory.Faker("text", max_nb_chars=150)
-    status_old = factory.fuzzy.FuzzyChoice(
-        choices=("NEW", "ACTIVE", "SUSPENDED")
-    )
     offer_status = factory.fuzzy.FuzzyChoice(
         choices=("unpublished", "published", "rejected")
     )
     recruitment_status = factory.fuzzy.FuzzyChoice(
         choices=("open", "supplemental", "closed")
-    )
-    action_status = factory.fuzzy.FuzzyChoice(
-        choices=("future", "ongoing", "finished")
     )
     votes = factory.fuzzy.FuzzyChoice(choices=(True, False))
     recruitment_start_date = factory.fuzzy.FuzzyDateTime(
@@ -240,4 +220,7 @@ class OfferFactory(factory.DjangoModelFactory):
     volunteers_limit = factory.fuzzy.FuzzyInteger(0, 1000)
     reserve_volunteers_limit = factory.fuzzy.FuzzyInteger(0, 1000)
     weight = factory.fuzzy.FuzzyInteger(0, 1000)
-    image = factory.RelatedFactory(OfferImageFactory, "offer")
+    image = ImageField(from_path=os.path.join(
+        os.path.dirname(__file__),
+        'static/volontulo/img/volontulo_baner.png'
+    ))

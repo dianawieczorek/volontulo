@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use
 
 """
 .. module:: api
 """
+
 from django.contrib import messages
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.messages import get_messages
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -20,9 +24,10 @@ from rest_framework import status
 from rest_framework.decorators import api_view, detail_route
 from rest_framework.decorators import authentication_classes
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets
+from rest_framework.views import APIView
 
 from apps.volontulo import models
 from apps.volontulo import permissions
@@ -30,8 +35,11 @@ from apps.volontulo import serializers
 from apps.volontulo.authentication import CsrfExemptSessionAuthentication
 from apps.volontulo.lib.email import send_mail
 from apps.volontulo.models import Organization
-from apps.volontulo.serializers import \
-    OrganizationContactSerializer, UsernameSerializer, PasswordSerializer
+from apps.volontulo.models import UserProfile
+from apps.volontulo.serializers import (
+    OrganizationContactSerializer, UsernameSerializer, PasswordSerializer,
+    ContactSerializer, PasswordChangeSerializer,
+)
 from apps.volontulo.views import logged_as_admin
 
 
@@ -51,18 +59,61 @@ def login_view(request):
         login(request, user)
 
         return Response(
-            serializers.UserSerializer(user, context={
-                'request': request
-            }).data,
+            serializers.UserSerializer(user).data,
             status=status.HTTP_200_OK,
         )
 
     return Response(
-        serializers.UserSerializer(request.user, context={
-            'request': request
-        }).data,
+        serializers.UserSerializer(request.user).data,
         status=status.HTTP_400_BAD_REQUEST,
     )
+
+
+@api_view(['POST'])
+@authentication_classes((CsrfExemptSessionAuthentication,))
+@permission_classes((AllowAny,))
+def register_view(request):
+    """REST API register view."""
+    if request.user.is_authenticated():
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    email = request.data.get('email')
+    password = request.data.get('password')
+
+    user = User.objects.create_user(
+        username=email,
+        email=email,
+        password=password,
+        is_active=False,
+    )
+    try:
+        user.save()
+    except IntegrityError:
+        return Response(status=status.HTTP_201_CREATED)
+
+    profile = UserProfile(user=user)
+    ctx = {'token': profile.uuid}
+    profile.save()
+    send_mail(request, 'registration', [user.email], context=ctx)
+
+    return Response(status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@authentication_classes((CsrfExemptSessionAuthentication,))
+@permission_classes((AllowAny,))
+def activate_view(_, uuid):
+    """View responsible for activating user account."""
+    try:
+        profile = UserProfile.objects.get(uuid=uuid)
+    except (UserProfile.DoesNotExist, ValidationError):
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if profile.user.is_active:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    profile.user.is_active = True
+    profile.user.save()
+    return Response(status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])
@@ -74,21 +125,6 @@ def logout_view(request):
         messages.success(request, 'Wylogowano')
         return Response({}, status=status.HTTP_200_OK)
     return Response({}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET'])
-@permission_classes((AllowAny,))
-def current_user(request):
-    """REST API view for current user."""
-    if request.user.is_authenticated():
-        return Response(
-            serializers.UserSerializer(request.user, context={
-                'request': request
-            }).data,
-            status=status.HTTP_200_OK,
-        )
-
-    return Response({}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -232,3 +268,85 @@ class OrganizationViewSet(viewsets.ModelViewSet):
                 many=True,
                 context={'request': request}).data,
             status=status.HTTP_200_OK)
+
+
+class Contact(APIView):
+    """Get all contact-related info and send contact message to admin."""
+    permission_classes = (AllowAny, )
+
+    def get(self, request):  # pylint: disable=unused-argument
+        """Return emails of administrators and possible contact entities."""
+        query = get_user_model().objects.filter(
+            userprofile__is_administrator=True,
+        ).order_by('email')
+        return Response({
+            'administrator_emails': list(
+                query.values_list('email', flat=True)
+            ),
+            'applicant_types': ContactSerializer.APPLICANT_CHOICES,
+        }, status.HTTP_200_OK)
+
+    def post(self, request):
+        """Sends contact email."""
+        serializer = ContactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        admin = User.objects.get(email=data['administrator_email'])
+        # For now send the same message to both user and administrator
+        send_mail(
+            request,
+            'contact_to_admin',
+            [
+                admin.email,
+                data['applicant_email'],
+            ],
+            data,
+            send_copy_to_admin=False,
+        )
+        return Response({}, status.HTTP_201_CREATED)
+
+
+class CurrentUser(APIView):
+    """REST API view for current user."""
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request):
+        """Gets current user."""
+        return Response(
+            serializers.UserSerializer(request.user).data,
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request):
+        """Updates current user."""
+        serializer = serializers.UserSerializer(
+            request.user, data=request.data,
+        )
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.save()
+            return Response(
+                serializers.UserSerializer(user).data,
+                status=status.HTTP_200_OK,
+            )
+
+
+class PasswordChangeView(APIView):
+    """Password change view."""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (CsrfExemptSessionAuthentication,)
+
+    @staticmethod
+    def post(request):
+        """Changes password of logged in user."""
+        user = request.user  # type: User
+        serializer = PasswordChangeSerializer(
+            data=request.data,
+            context={'user': request.user},
+        )
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user.set_password(data['password_new'])
+        user.save()
+        return Response({}, status.HTTP_200_OK)
