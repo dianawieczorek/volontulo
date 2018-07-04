@@ -12,7 +12,7 @@
   </div>
   <form (ngSubmit)="onSubmit()" #contactForm="ngForm">
     <div class="form-group row">
-      <label for="id_name" class="col-md-2 col-form-label">Twoje imię</label>
+      <label for="id_name" class="col-md-2 col-form-label">Twoje imię i nazwisko</label>
       <div class="col-md-4">
         <input
           type="text"
@@ -20,32 +20,16 @@
           class="form-control form-control-lg"
           [ngClass]="{'is-invalid': name.invalid && name.touched}"
           id="id_name"
-          [ngModel]="(user$ | async).firstName"
+          [ngModel]="(user$ | async).firstName + ' ' + (user$ | async).lastName"
           required
           minlength="2"
           maxlength="150"
           #name="ngModel" />
         <div
           class="invalid-feedback"
-          *ngIf="name.invalid && name.touched">Proszę podać imię</div>
+          *ngIf="name.invalid && name.touched">Proszę podać imię i nazwisko</div>
       </div>
-      <label for="id_lastName" class="col-md-2 col-form-label">Twoje nazwisko</label>
-      <div class="col-md-4">
-        <input
-          type="text"
-          name="lastName"
-          class="form-control form-control-lg"
-          [ngClass]="{'is-invalid': name.invalid && name.touched}"
-          id="id_lastName"
-          [ngModel]="(user$ | async).lastName"
-          required
-          minlength="2"
-          maxlength="150"
-          #name="ngModel" />
-        <div
-          class="invalid-feedback"
-          *ngIf="name.invalid && name.touched">Proszę podać nazwisko</div>
-      </div>
+
     </div>
     <div class="form-group row">
       <label class="col-md-2 col-form-label" for="id_email">Twój email</label>
