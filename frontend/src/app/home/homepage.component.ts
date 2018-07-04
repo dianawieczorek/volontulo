@@ -11,16 +11,12 @@ import { Offer } from '../homepage-offer/offers.model';
 })
 
 export class HomePageComponent implements OnInit {
-  offers: Array<Offer> = [];
+  offers: Offer[] = [];
 
   constructor(private offersService: OffersService) { }
 
   ngOnInit() {
     this.offersService.getOffers()
-      .subscribe(
-        offers => {
-          this.offers = offers;
-        }
-      );
+      .subscribe(offers => this.offers = offers);
   }
 }

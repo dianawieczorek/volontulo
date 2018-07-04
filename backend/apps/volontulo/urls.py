@@ -50,15 +50,21 @@ urlpatterns = [
         name='password_reset_confirm'
     ),
     url(r'^api/messages/$', api_views.messages_view, name='messages'),
+    url(r'^api/contact/$', api_views.Contact.as_view(), name='contact'),
+    url(
+        r'^api/register/$',
+        api_views.register_view,
+        name='register'
+    ),
+    url(
+        r'^api/activate/(?P<uuid>[-0-9A-Za-z]+)/$',
+        api_views.activate_view,
+        name='activate'
+    ),
+
 
     # login and loggged user space:
     url(r'^o/logout$', auth_views.logout, name='logout'),
-    url(r'^o/register$', auth_views.Register.as_view(), name='register'),
-    url(
-        r'^o/activate/(?P<uuid>[-0-9A-Za-z]+)$',
-        auth_views.activate,
-        name='activate'
-    ),
     url(r'^o/me$', views.logged_user_profile, name='logged_user_profile'),
     # me/edit
     # me/settings
@@ -66,34 +72,14 @@ urlpatterns = [
     # offers' namesapce:
     url(r'^o/offers$', offers_views.OffersList.as_view(), name='offers_list'),
     url(
-        r'^o/offers/delete/(?P<pk>[0-9]+)$',
-        offers_views.OffersDelete.as_view(),
-        name='offers_delete'
-    ),
-    url(
         r'^o/offers/accept/(?P<pk>[0-9]+)$',
         offers_views.OffersAccept.as_view(),
         name='offers_accept'
     ),
     url(
-        r'^o/offers/create$',
-        offers_views.OffersCreate.as_view(),
-        name='offers_create'
-    ),
-    url(
         r'^o/offers/reorder/(?P<id_>[0-9]+)?$',
         offers_views.OffersReorder.as_view(),
         name='offers_reorder'
-    ),
-    url(
-        r'^o/offers/archived$',
-        offers_views.OffersArchived.as_view(),
-        name='offers_archived'
-    ),
-    url(
-        r'^o/offers/(?P<slug>[\w-]+)/(?P<id_>[0-9]+)/edit$',
-        offers_views.OffersEdit.as_view(),
-        name='offers_edit'
     ),
     url(
         r'^o/offers/(?P<slug>[\w-]+)/(?P<id_>[0-9]+)/join$',
@@ -109,10 +95,4 @@ urlpatterns = [
     # users/slug-id/contact
 
     # organizations/filter
-
-    url(
-        r'^o/contact$',
-        views.contact_form,
-        name='contact_form'
-    ),
 ]

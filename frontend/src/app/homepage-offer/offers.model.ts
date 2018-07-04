@@ -1,20 +1,29 @@
 import { Organization } from '../organization/organization.model';
 
 export class Offer {
+    actionOngoing: boolean;
+    actionStatus: string;
+    benefits: string;
+    constantCoop: boolean;
+    description: string;
+    finishedAt: string | null;
     id: number;
-    image: string | null | undefined;
+    image: string;
+    joined: boolean;
     location: string;
+    offerStatus: string;
     organization: Organization;
+    recruitmentEndDate: string | null;
+    recruitmentStartDate: string | null;
+    requirements: string;
+    reserveRecruitment: boolean;
+    reserveRecruitmentEndDate: string | null;
+    reserveRecruitmentStartDate: string | null;
+    reserveVolunteersLimit: number;
     slug: string;
     startedAt: string | null;
-    finishedAt: string | null;
+    timeCommitment: string;
     title: string;
     url: string;
-    recruitmentEndDate: string | null;
-    timeCommitment: string;
-    requirements: string;
-    benefits: string;
-    description: string;
-    actionStatus: string;
-    offerStatus: string;
+    volunteersLimit: number;
 }

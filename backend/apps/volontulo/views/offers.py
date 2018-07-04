@@ -6,21 +6,17 @@
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.models import ADDITION, CHANGE
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseForbidden
+from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.views.generic import View
 
-from apps.volontulo.forms import (
-    CreateOfferForm, OfferApplyForm, OfferImageForm
-)
+from apps.volontulo.forms import OfferApplyForm
 from apps.volontulo.lib.email import send_mail
-from apps.volontulo.models import Offer, OfferImage, UserProfile
-from apps.volontulo.utils import correct_slug, save_history
+from apps.volontulo.models import Offer
+from apps.volontulo.models import UserProfile
+from apps.volontulo.utils import correct_slug
 from apps.volontulo.views import logged_as_admin
 
 
@@ -58,99 +54,6 @@ class OffersList(View):
             messages.success(request,
                              "Aktywowałeś ofertę '%s'" % offer.title)
         return redirect('offers_list')
-
-
-class OffersCreate(View):
-    """Class view supporting creation of new offer."""
-
-    @staticmethod
-    def get(request):
-        """Method responsible for rendering form for new offer.
-
-        :param request: WSGIRequest instance
-        """
-        if request.user.is_anonymous():
-            messages.info(
-                request,
-                "Aby założyć ofertę, musisz się zalogować lub zarejestrować."
-            )
-
-            return redirect(
-                '{ANGULAR_ROOT}/login?next={path}'.format(
-                    ANGULAR_ROOT=settings.ANGULAR_ROOT, path=request.path
-                )
-            )
-
-        if request.user.userprofile.is_administrator:
-            messages.info(
-                request,
-                "Administrator nie może tworzyć nowych ofert."
-            )
-            return redirect('offers_list')
-
-        organizations = request.user.userprofile.organizations.all()
-
-        if not organizations.exists():
-            messages.info(request, mark_safe(
-                "Nie masz jeszcze żadnej założonej organizacji"
-                " na {0}. Aby założyć organizację,"
-                " <a href='{1}/organizations/create/'>kliknij tu.</a>".format(
-                    settings.SYSTEM_DOMAIN,
-                    settings.ANGULAR_ROOT,
-                )
-            ))
-            return redirect('offers_list')
-
-        return render(
-            request,
-            'offers/offer_form.html',
-            {
-                'offer': Offer(),
-                'form': CreateOfferForm(),
-                'organizations': organizations,
-            }
-        )
-
-    @staticmethod
-    def post(request):
-        """Method responsible for saving new offer.
-
-        :param request: WSGIRequest instance
-        """
-        form = CreateOfferForm(request.POST)
-        if form.is_valid():
-            offer = form.save()
-            offer.create_new()
-            offer.save()
-            save_history(request, offer, action=ADDITION)
-            send_mail(
-                request,
-                'offer_creation',
-                ['administrators@volontuloapp.org'],
-                {'offer': offer}
-            )
-            messages.success(request, "Dziękujemy za dodanie oferty.")
-            return redirect(
-                '{ANGULAR_ROOT}/offers/{slug}/{id}'.format(
-                    ANGULAR_ROOT=settings.ANGULAR_ROOT,
-                    slug=slugify(offer.title),
-                    id=str(offer.id),
-                )
-            )
-        messages.error(
-            request,
-            "Formularz zawiera niepoprawnie wypełnione pola <br />{0}".format(
-                '<br />'.join(form.errors)),
-        )
-        return render(
-            request,
-            'offers/offer_form.html',
-            {
-                'form': form,
-                'offer': Offer(),
-                'organizations': request.user.userprofile.organizations.all(),
-            }
-        )
 
 
 class OffersReorder(View):
@@ -202,155 +105,6 @@ class OffersReorder(View):
         return redirect('offers_list')
 
 
-class OffersEdit(View):
-    """Class view supporting change of a offer."""
-
-    def dispatch(self, request, *args, **kwargs):
-        """Dispatch method overriden to check offer edit permission"""
-        try:
-            is_edit_allowed = request.user.userprofile.can_edit_offer(
-                offer_id=kwargs['id_'])
-        except Offer.DoesNotExist:
-            is_edit_allowed = False
-        if not is_edit_allowed:
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
-
-    @staticmethod
-    @correct_slug(Offer, 'offers_edit', 'title')
-    def get(request, slug, id_):  # pylint: disable=unused-argument
-        """Method responsible for rendering form for offer to be changed.
-
-        :param request: WSGIRequest instance
-        :param slug: string Offer title slugified
-        :param id_: int Offer database unique identifier (primary key)
-        """
-        offer = Offer.objects.get(id=id_)
-        if offer.id or request.user.userprofile.is_administrator:
-            organizations = [offer.organization]
-        else:
-            organizations = request.user.userprofile.organizations.all()
-
-        return render(
-            request,
-            'offers/offer_form.html',
-            {
-                'offer': offer,
-                'offer_form': CreateOfferForm(),
-                'organization': offer.organization,
-                'organizations': organizations,
-                'offer_image_form': OfferImageForm(),
-                'images': OfferImage.objects.filter(offer=offer).all(),
-                'MEDIA_URL': settings.MEDIA_URL,
-            }
-        )
-
-    @staticmethod
-    def post(request, slug, id_):  # pylint: disable=unused-argument
-        """Method resposible for saving changed offer.
-
-        :param request: WSGIRequest instance
-        :param slug: string Offer title slugified
-        :param id_: int Offer database unique identifier (primary key)
-        """
-        offer = Offer.objects.get(id=id_)
-        if request.POST.get('submit') == 'save_image' and request.FILES:
-            form = OfferImageForm(request.POST, request.FILES)
-            if form.is_valid():
-                offer.save_offer_image(
-                    form.save(commit=False),
-                    form.cleaned_data['is_main']
-                )
-                messages.success(request, "Dodano zdjęcie do galerii.")
-            else:
-                messages.error(
-                    request,
-                    "Problem w trakcie dodawania grafiki: {}".format(
-                        "<br />".join(form.errors)
-                    )
-                )
-
-            return redirect(
-                reverse(
-                    'offers_edit',
-                    args=[slugify(offer.title), offer.id]
-                )
-            )
-        elif request.POST.get('close_offer') == 'close':
-            offer.close_offer()
-            return redirect(
-                '{ANGULAR_ROOT}/offers/{slug}/{id}'.format(
-                    ANGULAR_ROOT=settings.ANGULAR_ROOT,
-                    slug=slugify(offer.title),
-                    id=str(offer.id),
-                )
-            )
-        elif request.POST.get('status_flag') == 'change_status':
-            if request.POST.get('status') == 'published':
-                offer.publish()
-                if request.user.userprofile.is_administrator:
-                    return redirect('offers_reorder', offer.id)
-            elif request.POST.get('status') == 'rejected':
-                offer.reject()
-            return redirect('offers_list')
-
-        form = CreateOfferForm(
-            request.POST, instance=offer
-        )
-
-        if form.is_valid():
-            offer = form.save()
-            offer.unpublish()
-            offer.save()
-            save_history(request, offer, action=CHANGE)
-            messages.success(request, "Oferta została zmieniona.")
-        else:
-            messages.error(
-                request,
-                "Formularz zawiera niepoprawnie wypełnione pola: {}".format(
-                    "<br />".join(form.errors)
-                )
-            )
-
-        if offer.id or request.user.userprofile.is_administrator:
-            organizations = [offer.organization]
-        else:
-            organizations = request.user.userprofile.organizations.all()
-
-        return render(
-            request,
-            'offers/offer_form.html',
-            {
-                'offer': offer,
-                'form': form,
-                'organizations': organizations,
-                'offer_image_form': OfferImageForm(),
-            }
-        )
-
-
-class OffersDelete(View):
-    """ Class view responsible for deletion of offers """
-
-    @staticmethod
-    def get(request, pk):  # pylint: disable=invalid-name
-        """Method which allows to delete selected offer
-
-        :param request: WSGIRequest instance
-        :param pk: Offer id
-        """
-        offer = get_object_or_404(Offer, pk=pk)
-        if (
-                request.user.is_authenticated() and
-                request.user.userprofile.is_administrator
-        ):
-            offer.reject()
-            messages.info(request, "Oferta została odrzucona.")
-            return redirect(settings.ANGULAR_ROOT)
-
-        return HttpResponseForbidden()
-
-
 class OffersAccept(View):
     """ Class view responsible for acceptance of offers """
 
@@ -393,16 +147,11 @@ class OffersJoin(View):
                 return redirect('offers_list')
 
         offer = Offer.objects.get(id=id_)
-        try:
-            main_image = OfferImage.objects.get(offer=offer, is_main=True)
-        except OfferImage.DoesNotExist:
-            main_image = ''
 
         context = {
             'form': OfferApplyForm(),
             'offer': offer,
             'MEDIA_URL': settings.MEDIA_URL,
-            'main_image': main_image,
         }
 
         context['volunteer_user'] = UserProfile()
@@ -445,7 +194,9 @@ class OffersJoin(View):
                     request,
                     "Zarejestruj się, aby zapisać się do oferty."
                 )
-                return redirect('register')
+                return redirect('{ANGULAR_ROOT}/register'.format(
+                    ANGULAR_ROOT=settings.ANGULAR_ROOT
+                ))
 
             has_applied = Offer.objects.filter(
                 volunteers=user,
@@ -504,17 +255,3 @@ class OffersJoin(View):
                     'volunteer_user': volunteer_user,
                 }
             )
-
-
-class OffersArchived(View):
-    """Class based view to list archived offers."""
-
-    @staticmethod
-    def get(request):
-        """GET request for offer archive page.
-
-        :param request: WSGIRequest instance
-        """
-        return render(request, 'offers/archived.html', {
-            'offers': Offer.objects.get_archived()
-        })

@@ -7,13 +7,16 @@
 import base64
 import io
 
+from dateutil import parser
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import CharField, EmailField
+from rest_framework.fields import CharField, EmailField, ChoiceField
 
 from apps.volontulo import models
+from apps.volontulo.validators import validate_admin_email
 
 
 class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
@@ -64,32 +67,36 @@ class OrganizationField(serializers.Field):
             )
 
 
-class OfferImageField(serializers.Field):
+class ImageField(serializers.Field):
 
     """Custom field for offer's image serialization."""
 
     def to_representation(self, value):
         """Transform internal value into serializer representation."""
-        image = (
-            value.filter(is_main=True).first() or
-            value.first()
-        )
         return self.context['request'].build_absolute_uri(
-            location=image.path.url
-        ) if image else None
+            location=value.url
+        ) if value else None
 
     def to_internal_value(self, data):
         """Transform  serializer representation into internal value."""
-        data['content'] = base64.b64decode(data['content'])
-        return data
+        return io.BytesIO(base64.b64decode(data))
 
 
 class OfferSerializer(serializers.HyperlinkedModelSerializer):
 
     """REST API offers serializer."""
 
+    start_finish_error = """Data rozpoczęcia akcji nie może być
+        późniejsza, niż data zakończenia"""
+    recruitment_error = """Data rozpoczęcia rekrutacji
+        nie może być późniejsza, niż data zakończenia"""
+    reserve_recruitment_error = """Data rozpoczęcia rekrutacji
+        rezerwowej nie może być późniejsza, niż data zakończenia"""
+    recruitment_start_finish_error = """Rekrutacja rezerwowa
+        nie może zacząć się przed podstawową"""
+
     slug = serializers.SerializerMethodField()
-    image = OfferImageField(source='images', allow_null=True, required=False)
+    image = ImageField(allow_null=True, required=False)
     organization = OrganizationField()
 
     class Meta:
@@ -112,8 +119,23 @@ class OfferSerializer(serializers.HyperlinkedModelSerializer):
             'time_commitment',
             'time_period',
             'recruitment_end_date',
+            'recruitment_start_date',
+            'reserve_recruitment',
+            'reserve_recruitment_start_date',
+            'reserve_recruitment_end_date',
+            'action_ongoing',
+            'constant_coop',
+            'volunteers_limit',
+            'reserve_volunteers_limit',
         )
-
+    date_fields = [
+        'started_at',
+        'finished_at',
+        'recruitment_end_date',
+        'recruitment_start_date',
+        'reserve_recruitment_start_date',
+        'reserve_recruitment_end_date'
+    ]
     start_finish_error = (
         "Data rozpoczęcia akcji nie może być "
         "późniejsza, niż data zakończenia"
@@ -127,6 +149,16 @@ class OfferSerializer(serializers.HyperlinkedModelSerializer):
         "rezerwowej nie może być późniejsza, niż data zakończenia"
     )
 
+    def to_internal_value(self, data):
+        for field in self.date_fields:
+            if data.get(field):
+                try:
+                    data[field] = str(parser.parse(data[field]))
+                except (ValueError, TypeError):
+                    raise ValidationError(
+                        [field, "improper format"], code=None)
+        return super().to_internal_value(data)
+
     def validate(self, attrs):
         data = super(OfferSerializer, self).validate(attrs)
         self._validate_start_finish(data, 'started_at', 'finished_at',
@@ -137,6 +169,9 @@ class OfferSerializer(serializers.HyperlinkedModelSerializer):
         self._validate_start_finish(data, 'reserve_recruitment_start_date',
                                     'reserve_recruitment_end_date',
                                     self.reserve_recruitment_error)
+        self._validate_start_finish(data, 'recruitment_start_date',
+                                    'reserve_recruitment_start_date',
+                                    self.recruitment_start_finish_error)
         return data
 
     def validate_organization(self, organization):
@@ -161,24 +196,12 @@ class OfferSerializer(serializers.HyperlinkedModelSerializer):
                 raise serializers.ValidationError(error_desc)
 
     def save(self, **kwargs):
-        image_set = 'images' in self.validated_data
-        if image_set:
-            image = self.validated_data.pop('images')
-
+        image = self.validated_data.pop('image', None)
         instance = super(OfferSerializer, self).save(**kwargs)
 
-        if image_set:
-            instance.images.all().delete()
-            if image:
-                instance_image = models.OfferImage(
-                    offer=instance,
-                    is_main=True,
-                )
-                instance_image.path.save(
-                    image['filename'],
-                    io.BytesIO(image['content'])
-                )
-                instance_image.save()
+        if image:
+            instance.image.save('no-name-required', image)
+            instance.save()
         return instance
 
     @staticmethod
@@ -251,3 +274,20 @@ class MessageSerializer(serializers.Serializer):
     """Serializer for messages from Django contrib."""
     message = CharField(required=True)
     type = CharField(required=True, source='level_tag')
+
+
+class ContactSerializer(serializers.Serializer):
+    """Serializer for contact message."""
+    VOLUNTEER = 'volunteer'
+    ORGANIZATION = 'organization'
+    APPLICANT_CHOICES = (VOLUNTEER, ORGANIZATION)
+
+    applicant_type = ChoiceField(APPLICANT_CHOICES, required=True)
+    applicant_email = EmailField(required=True, max_length=150)
+    applicant_name = CharField(required=True, min_length=3, max_length=150)
+    administrator_email = EmailField(
+        required=True,
+        validators=[validate_admin_email],
+    )
+    message = CharField(required=True, min_length=10, max_length=2000)
+    phone_no = CharField(max_length=20)

@@ -8,23 +8,7 @@
 {% block content %}
 
     <div class="row">
-        <div class="col-xs-12 col-sm-6">
-            <div class="panel panel-default">
-                <h3 class="panel-heading lead">
-                    <span class="glyphicon glyphicon-picture" aria-hidden="true"></span>
-                    Zdjęcie profilowe
-                </h3>
-                <div class="panel-body">
-                  <div class="col-xs-8">
-                    {% include 'users/gallery.html' with image=image %}
-                  </div>
-                  <div class="col-xs-4 user-photo">
-                      <img src="{{ MEDIA_URL }}{{ userprofile.get_avatar.0.image }}">
-                  </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-6">
+        <div class="col-xs-12">
             <div class="panel panel-default">
                 <h3 class="panel-heading lead">
                     <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
@@ -65,7 +49,7 @@
             {% if userprofile.is_in_organization %}
                 <div class="h4">
                     <h4>Organizowane oferty</h4>
-                    <a href="{% url 'offers_create' %}" class="btn btn-primary btn-sm">Utwórz ofertę</a>
+                    <a href="{{ ANGULAR_ROOT }}/offers/create" class="btn btn-primary btn-sm">Utwórz ofertę</a>
                 </div>
                 {% include 'organizations/organization_offers.html' with offers=created_offers %}
             {% else %}
