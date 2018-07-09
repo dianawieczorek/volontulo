@@ -6,6 +6,7 @@ import { ContactStatus } from '../organization.interfaces';
 import {AuthService} from '../../auth.service';
 import {Observable} from 'rxjs/Observable';
 import {User} from '../../user';
+import {UserService} from "../../user.service";
 
 
 @Component({
@@ -21,9 +22,12 @@ export class OrganizationContactComponent implements OnChanges {
   alertSuccessClosed = true;
   alertErrorClosed = true;
   user$: Observable<User>;
+  getFullName;
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, userService: UserService) {
     this.user$ = authService.user$;
+    this.getFullName = userService.getFullName;
+
   }
 
   ngOnChanges(changes: SimpleChanges) {

@@ -8,8 +8,4 @@ export interface User {
   organizations: Array<Organization>,
   phoneNo: string;
   username: string,
-  firstName: string,
-  lastName: string,
-  email: string,
-  phoneNo: string,
 }
