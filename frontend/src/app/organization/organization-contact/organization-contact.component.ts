@@ -21,13 +21,10 @@ export class OrganizationContactComponent implements OnChanges {
   submitDisabled = false;
   alertSuccessClosed = true;
   alertErrorClosed = true;
-  user$: Observable<User>;
-  getFullName;
+  user$: Observable<User> = this.authService.user$;
+  getFullName = this.userService.getFullName;
 
-  constructor(private authService: AuthService, userService: UserService) {
-    this.user$ = authService.user$;
-    this.getFullName = userService.getFullName;
-
+  constructor(private authService: AuthService, private userService: UserService) {
   }
 
   ngOnChanges(changes: SimpleChanges) {
