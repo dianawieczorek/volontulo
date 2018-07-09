@@ -6,7 +6,7 @@ import { ContactStatus } from '../organization.interfaces';
 import {AuthService} from '../../auth.service';
 import {Observable} from 'rxjs/Observable';
 import {User} from '../../user';
-import {UserService} from "../../user.service";
+import {UserService} from '../../user.service';
 
 
 @Component({
