@@ -18,7 +18,7 @@
       <label for="title" class="col-sm-3 col-form-label">*Tytuł oferty:</label>
       <div class="col-sm-6">
         <input type="text" class="form-control" placeholder="Tytuł oferty..." id="title" formControlName="title" required>
-        <span class="form-text text-muted" *ngIf="isFormInputInvalid('title')">
+        <span class="form-text text-danger" *ngIf="isFormInputInvalid('title')">
           To pole jest obowiązkowe.</span>
       </div>
       <div class="col-sm-3">Określ, jak oferta będzie nazywać się w systemie, staraj się być dokładnym.</div>
@@ -28,7 +28,7 @@
       <div class="col-sm-6">
         <input type="text" class="form-control" placeholder="Miejsce odbywania wolontariatu..." id="location" formControlName="location"
           required>
-        <span class="form-text text-muted" *ngIf="isFormInputInvalid('location')">
+        <span class="form-text text-danger" *ngIf="isFormInputInvalid('location')">
           To pole jest obowiązkowe.</span>
       </div>
       <div class="col-sm-3">Określ, w jakim miejscu odbywać się będzie wolontariat.</div>
@@ -40,7 +40,7 @@
           <option *ngFor="let organization of user?.organizations" [ngValue]="organization">
             {{ organization?.name }}</option>
         </select>
-        <span class="form-text text-muted" *ngIf="isFormInputInvalid('organization')">
+        <span class="form-text text-danger" *ngIf="isFormInputInvalid('organization')">
           To pole jest obowiązkowe.</span>
       </div>
       <div class="col-sm-3">Określ organizację odpowiedzialną za wolontariat.</div>
@@ -64,7 +64,7 @@
           </div>
         </div>
         <div class="col-sm-12 errors">
-          <span class="form-text text-muted" *ngIf="form.errors?.startedAtError">Jeśli akcja już trwa, nie podawaj daty początkowej.</span>
+          <span class="form-text text-danger" *ngIf="form.errors?.startedAtError">Jeśli akcja już trwa, nie podawaj daty początkowej.</span>
         </div>
       </div>
       <div class="col-sm-3">Określ datę rozpoczęcia akcji w formacie RRRR-MM-DD.</div>
@@ -87,7 +87,7 @@
           </div>
         </div>
         <div class="col-sm-12 errors">
-          <span class="form-text text-muted" *ngIf="form.errors?.finishedAtError">
+          <span class="form-text text-danger" *ngIf="form.errors?.finishedAtError">
             Jeśli akcja nie kończy się, nie podawaj daty końcowej.
           </span>
         </div>
@@ -106,11 +106,24 @@
                 <div class="col-sm-9">
                   <input type="datetime" placeholder="RRRR-MM-DD" class="form-control" id="recruitmentStartDate" formControlName="recruitmentStartDate">
                 </div>
+                <div class="col-sm-12 errors">
+                  <span class="form-text text-danger" *ngIf="form.errors?.recruitmentStartDateError">
+                    Rekrutacja nie moze zaczynać się po zakończeniu akcji
+                  </span>
+                </div>
               </div>
               <div class="form-group row">
                 <label for="recruitmentEndDate" class="col-sm-3 col-form-label">Koniec:</label>
                 <div class="col-sm-9">
                   <input type="datetime" placeholder="RRRR-MM-DD" class="form-control" id="recruitmentEndDate" formControlName="recruitmentEndDate">
+                </div>
+                <div class="col-sm-12 errors">
+                  <span class="form-text text-danger" *ngIf="form.errors?.recruitmentEndDateError">
+                    Rekrutacja nie moze kończyć się po zakończeniu akcji
+                  </span>
+                  <span class="form-text text-danger" *ngIf="form.errors?.recruitmentError">
+                    Data zakończenia rekrutacji nie może być wcześniejsza niż data jej rozpoczęcia
+                  </span>
                 </div>
               </div>
               <div class="form-group row">
@@ -131,11 +144,24 @@
                 <div class="col-sm-9">
                   <input type="datetime" placeholder="RRRR-MM-DD" class="form-control" id="reserveRecruitmentStartDate" formControlName="reserveRecruitmentStartDate">
                 </div>
+                <div class="col-sm-12 errors">
+                  <span class="form-text text-danger" *ngIf="form.errors?.reserveRecruitmentStartDate">
+                    Rekrutacja rezerwowa nie moze zaczynać się po zakończeniu akcji
+                  </span>
+                </div>
               </div>
               <div class="form-group row">
                 <label for="reserveRecruitmentEndDate" class="col-sm-3 col-form-label">Koniec:</label>
                 <div class="col-sm-9">
                   <input type="datetime" placeholder="RRRR-MM-DD" class="form-control" id="reserveRecruitmentEndDate" formControlName="reserveRecruitmentEndDate">
+                </div>
+                <div class="col-sm-12 errors">
+                  <span class="form-text text-danger" *ngIf="form.errors?.reserveRecruitmentEndDate">
+                    Rekrutacja rezerwowa nie moze kończyć się po zakończeniu akcji
+                  </span>
+                  <span class="form-text text-danger" *ngIf="form.errors?.reserveRecruitmentDate">
+                    Data końca rekrutacji rezerwowej nie może być wcześniejsza niż data jej rozpoczęcia
+                  </span>
                 </div>
               </div>
               <div class="form-group row">
@@ -155,7 +181,7 @@
       <div class="col-sm-6">
         <textarea type="text" class="form-control" placeholder="Opis oferty..." id="description" formControlName="description" required>
       </textarea>
-        <span class="form-text text-muted" *ngIf="isFormInputInvalid('description')">
+        <span class="form-text text-danger" *ngIf="isFormInputInvalid('description')">
           To pole jest obowiązkowe.</span>
       </div>
       <div class="col-sm-3">Postaraj się dokładnie opisać akcję.</div>
@@ -166,7 +192,7 @@
         <textarea type="text" class="form-control" placeholder="Wymagania czasowe..." id="timeCommitment" formControlName="timeCommitment"
           required>
         </textarea>
-        <span class="form-text text-muted" *ngIf="isFormInputInvalid('timeCommitment')">
+        <span class="form-text text-danger" *ngIf="isFormInputInvalid('timeCommitment')">
           To pole jest obowiązkowe.</span>
       </div>
       <div class="col-sm-3">Określ wymagania czasowe - ile godzin pracy w ciągu dnia wymaga dana akcja.</div>
@@ -177,7 +203,7 @@
         <textarea type="text" class="form-control" placeholder="Korzyści dla wolontariusza..." id="benefits" formControlName="benefits"
           required>
       </textarea>
-        <span class="form-text text-muted" *ngIf="isFormInputInvalid('benefits')">
+        <span class="form-text text-danger" *ngIf="isFormInputInvalid('benefits')">
           To pole jest obowiązkowe.</span>
       </div>
       <div class="col-sm-3">Określ korzyści płynące z udziału w akcji.</div>
@@ -203,7 +229,7 @@
           </div>
           <input type="file" id="image" (change)="onFileSelected($event)" accept="image/x-png,image/jpeg">
         </div>
-        <span class="form-text text-muted" *ngIf="isFileToBig">
+        <span class="form-text text-danger" *ngIf="isFileToBig">
           Rozmiar pliku nie może przekraczać 1MB.
         </span>
       </div>

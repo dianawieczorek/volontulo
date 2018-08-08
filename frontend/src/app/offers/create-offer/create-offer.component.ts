@@ -139,7 +139,7 @@ export class CreateOfferComponent implements OnInit, OnDestroy {
   }
 
   areDatesValid(form: FormGroup): {[key: string]: boolean} | null {
-    const { startedAt, actionOngoing, finishedAt, constantCoop } = form.value;
+    const { startedAt, actionOngoing, finishedAt, constantCoop, recruitmentStartDate, recruitmentEndDate, reserveRecruitmentStartDate, reserveRecruitmentEndDate } = form.value;
     const validationErrors = {};
 
     if (startedAt && actionOngoing) {
@@ -148,6 +148,38 @@ export class CreateOfferComponent implements OnInit, OnDestroy {
 
     if (finishedAt && constantCoop) {
       validationErrors['finishedAtError'] = true;
+    }
+
+    if (recruitmentStartDate && constantCoop || recruitmentStartDate && finishedAt=="") {
+      validationErrors['recruitmentStartDateError'] = false;
+    } else if (recruitmentStartDate > finishedAt) {
+      validationErrors['recruitmentStartDateError'] = true;
+    }
+
+    if (recruitmentEndDate && constantCoop || recruitmentEndDate && finishedAt=="") {
+      validationErrors['recruitmentEndDateError'] = false;
+    } else if (recruitmentEndDate > finishedAt) {
+      validationErrors['recruitmentEndDateError'] = true;
+    }
+
+    if (recruitmentEndDate < recruitmentStartDate) {
+      validationErrors['recruitmentError'] = true;
+    }
+
+    if (reserveRecruitmentStartDate && constantCoop || reserveRecruitmentStartDate && finishedAt=="") {
+      validationErrors['reserveRecruitmentStartDate'] = false;
+    } else if (reserveRecruitmentStartDate > finishedAt) {
+      validationErrors['reserveRecruitmentStartDate'] = true;
+    }
+
+    if (reserveRecruitmentEndDate && constantCoop || reserveRecruitmentEndDate && finishedAt=="") {
+      validationErrors['reserveRecruitmentEndDate'] = false;
+    } else if (reserveRecruitmentEndDate > finishedAt) {
+      validationErrors['reserveRecruitmentEndDate'] = true;
+    }
+
+    if (reserveRecruitmentEndDate < reserveRecruitmentStartDate) {
+      validationErrors['reserveRecruitmentDate'] = true;
     }
 
     const hasAnyError = Object.keys(validationErrors).length > 0;
