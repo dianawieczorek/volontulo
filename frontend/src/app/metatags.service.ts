@@ -21,12 +21,12 @@ export class MetatagsService {
   public setMeta(title = 'Volontulo. Portal dla wolontariuszy', metatags = {}): void {
     this.titleService.setTitle(title);
 
-    // set default tags, that will be orverwritten below:
-    this.metaService.updateTag({ name: 'og:url', content: this.getCanonicalUrl(this.locationService.path()) });
-    this.metaService.updateTag({ name: 'og:title', content: 'Volontulo. Portal dla wolontariuszy' });
-    this.metaService.updateTag({ name: 'og:description', content: 'Volontulo. Portal dla wolontariuszy'});
-    this.metaService.updateTag({ name: 'og:image', content: this.getCanonicalUrl('/assets/img/banner/volontulo_baner.png') });
-    this.metaService.updateTag({ name: 'fb:app_id', content: environment.fbAppID });
+// set default tags, that will be orverwritten below:
+    this.metaService.updateTag({ property: 'og:url', content: this.getCanonicalUrl(this.locationService.path()) });
+    this.metaService.updateTag({ property: 'og:title', content: 'Volontulo. Portal dla wolontariuszy' });
+    this.metaService.updateTag({ property: 'og:description', content: 'Volontulo. Portal dla wolontariuszy'});
+    this.metaService.updateTag({ property: 'og:image', content: this.getCanonicalUrl('/assets/img/banner/volontulo_baner.png') });
+    this.metaService.updateTag({ property: 'fb:app_id', content: environment.fbAppID });
 
     Object.keys(metatags)
       .map((key) => ({name: key, content: metatags[key]}))
