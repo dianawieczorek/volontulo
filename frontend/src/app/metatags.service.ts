@@ -29,7 +29,7 @@ export class MetatagsService {
     this.metaService.updateTag({ property: 'fb:app_id', content: environment.fbAppID });
 
     Object.keys(metatags)
-      .map((key) => ({name: key, content: metatags[key]}))
+      .map((key) => ({ property: key, content: metatags[key] }))
       .forEach((metatag) => this.metaService.updateTag(metatag));
   }
 
