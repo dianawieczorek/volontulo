@@ -20,7 +20,7 @@ export class OrganizationDetailsComponent {
   }
 
   ngOnInit() {
-    this.metaService.updateTag({ property: 'og:title', content: this.organization.name + '- Volontulo. Portal dla wolontariuszy' });
+    this.metaService.updateTag({ property: 'og:title', content: this.organization.name + ' - Volontulo. Portal dla wolontariuszy' });
     this.metaService.updateTag({ property: 'og:description', content: this.organization.description});
   }
 
