@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 
 import { Organization } from 'app/models/organization.model';
 import { environment } from 'environments/environment';
-import { MetatagsService } from "app/services/metatags.service";
+import { MetatagsService } from 'app/services/metatags.service';
 
 
 @Component({
@@ -11,7 +11,7 @@ import { MetatagsService } from "app/services/metatags.service";
   styleUrls: ['./organization-details.component.scss'],
 })
 
-export class OrganizationDetailsComponent {
+export class OrganizationDetailsComponent implements OnInit {
   @Input() isUserOrgMember: boolean;
   @Input() organization: Organization;
   djangoRoot: string = environment.djangoRoot;
