@@ -1,0 +1,86 @@
+<div class="container" *ngIf="offer$ | async as offer">
+    <div class="card bg-light mb-3 text-white">
+        <img class="card-img" src="{{ offer.image }}" alt="{{ offer.title }}">
+        <div class="card-img-overlay">
+            <div class="col-md-12 header-panels-box">
+                <div class="header-panels">
+                    <div class="header-panel">{{ offer.title }}</div>
+                    <div class="clearfix"></div>
+                    <div class="header-labels">
+                        <div class="box">
+                            <div class="icon"><fa-icon [icon]="faMapMarkerAlt"></fa-icon></div>
+                            <div class="content">{{ offer.location }}</div>
+                        </div>
+                        <div class="box">
+                            <div class="icon"><fa-icon [icon]="faClock"></fa-icon></div>
+                            <div class="content">{{ offer.startedAt | date:'shortDate' }} - {{ offer.finishedAt | date:'shortDate' }}</div>
+                        </div>
+                        <div class="box" *ngIf="(isUserOrgMember$ | async)">
+                            <div class="icon"><fa-icon [icon]="faEdit"></fa-icon></div>
+                            <div class="content"><a [routerLink]="['edit']" class="btn btn-sm">Edytuj ofertę</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="card">
+                <h3 class="card-header">{{ offer.title }}</h3>
+                <div class="card-body">
+                    <p class="card-text">{{ offer.description }} </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="card">
+                <h3 class="card-header">Korzyści dla wolontariusza</h3>
+                <div class="card-body">
+                <p class="card-text">{{ offer.benefits }}</p>
+            </div>
+            </div>
+            <div class="card">
+                <h3 class="card-header">Wymagania wobec wolontariusza</h3>
+                <div class="card-body">
+                <p class="card-text">{{ offer.requirements }}</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="card-header">Zaangażowanie czasowe</h3>
+                <div class="card-body">
+                <p class="card-text">{{ offer.timeCommitment }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="card text-center">
+                <div *ngIf="offer.joined; else didNotJoin">
+                    <div class="alert alert-primary">
+                        <h2>Pomagasz już w tej inicjatywie</h2>
+                        <p>Dziękujemy za zaangażowanie!</p>
+                        <a [routerLink]="['/organizations', offer.organization.slug, offer.organization.id]" class="btn btn-light" >Zadaj pytanie</a>
+                        <hr>
+                        <a [routerLink]="['/faq-volunteers']" class="btn btn-light" >Częste pytania i odpowiedzi</a>
+                    </div>
+            </div>
+              <ng-template #didNotJoin>
+                <div class="alert alert-danger">
+                    <h2>Możesz pomóc?</h2>
+                    <p>Twoja pomoc jest ważna. Potrzebujemy Ciebie!</p>
+                    <a class="btn btn-light" href="{{ getJoinViewUrl(offer) }}"
+                    >Zgłoś się na ten wolontariat</a>
+                </div>
+             </ng-template>
+            <h3 class="card-body">Rekrutacja trwa do:
+            {{ offer.recruitmentEndDate | date:'shortDate' }}</h3>
+        </div>
+            <div class="card">
+                <h3 class="card-header">Organizator</h3>
+                <div class="card-body">
+                <a [routerLink]="['/organizations', offer.organization.slug, offer.organization.id]" class="card-text">{{ offer.organization.name }}</a>
+                </div>
+            </div>
+         </div>
+    </div>
+</div>

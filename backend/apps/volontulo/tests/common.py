@@ -93,6 +93,7 @@ def test_offer_list_fields(self, offer):
                           (str, type(None)))
     self.assertIsInstance(offer.pop('reserve_recruitment_end_date'),
                           (str, type(None)))
+    self.assertIsInstance(offer.pop('recruitment_status'), str)
     self.assertIsInstance(offer.pop('action_ongoing'), bool)
     self.assertIsInstance(offer.pop('constant_coop'), bool)
     self.assertIsInstance(offer.pop('volunteers_limit'), int)
@@ -102,6 +103,7 @@ def test_offer_list_fields(self, offer):
     self.assertIsInstance(offer['organization'].pop('id'), int)
     self.assertIsInstance(offer['organization'].pop('name'), str)
     self.assertIsInstance(offer['organization'].pop('slug'), str)
+    self.assertIsInstance(offer['organization'].pop('url'), str)
     self.assertEqual(len(offer.pop('organization')), 0)
     self.assertIsInstance(offer.pop('joined'), bool)
     self.assertEqual(len(offer), 0)
